@@ -712,7 +712,7 @@ def test_request_processing(app, client):
 
     app.register_blueprint(bp)
 
-    assert evts == []
+    assert not evts
     rv = client.get("/bp")
     assert rv.data == b"request|after"
     assert evts == ["before", "after", "teardown"]
@@ -748,7 +748,7 @@ def test_app_request_processing(app, client):
         return "request"
 
     # before first request
-    assert evts == []
+    assert not evts
 
     # first request
     resp = client.get("/").data

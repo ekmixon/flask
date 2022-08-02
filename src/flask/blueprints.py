@@ -74,7 +74,7 @@ class BlueprintSetupState:
         #: A dictionary with URL defaults that is added to each and every
         #: URL that was defined with the blueprint.
         self.url_defaults = dict(self.blueprint.url_values_defaults)
-        self.url_defaults.update(self.options.get("url_defaults", ()))
+        self.url_defaults |= self.options.get("url_defaults", ())
 
     def add_url_rule(
         self,
@@ -293,7 +293,7 @@ class Blueprint(Scaffold):
             Registering the same blueprint with the same name multiple
             times is deprecated and will become an error in Flask 2.1.
         """
-        first_registration = not any(bp is self for bp in app.blueprints.values())
+        first_registration = all(bp is not self for bp in app.blueprints.values())
         name_prefix = options.get("name_prefix", "")
         self_name = options.get("name", self.name)
         name = f"{name_prefix}.{self_name}".lstrip(".")
@@ -307,16 +307,15 @@ class Blueprint(Scaffold):
                     f" a different blueprint{existing_at}. Use 'name='"
                     " to provide a unique name."
                 )
-            else:
-                import warnings
+            import warnings
 
-                warnings.warn(
-                    f"The name '{self_name}' is already registered for"
-                    f" this blueprint{existing_at}. Use 'name=' to"
-                    " provide a unique name. This will become an error"
-                    " in Flask 2.1.",
-                    stacklevel=4,
-                )
+            warnings.warn(
+                f"The name '{self_name}' is already registered for"
+                f" this blueprint{existing_at}. Use 'name=' to"
+                " provide a unique name. This will become an error"
+                " in Flask 2.1.",
+                stacklevel=4,
+            )
 
         app.blueprints[name] = self
         self._got_registered_once = True
@@ -342,12 +341,11 @@ class Blueprint(Scaffold):
                 value = defaultdict(
                     dict,
                     {
-                        code: {
-                            exc_class: func for exc_class, func in code_values.items()
-                        }
+                        code: dict(code_values.items())
                         for code, code_values in value.items()
                     },
                 )
+
                 app.error_handler_spec[key] = value
 
             for endpoint, func in self.view_functions.items():

@@ -62,13 +62,16 @@ class FormDataRoutingRedirect(AssertionError):
                 " trailing slash if it was accessed without one."
             )
 
-        buf.append(
-            "  Make sure to directly send your"
-            f" {request.method}-request to this URL since we can't make"
-            " browsers or HTTP clients redirect with form data reliably"
-            " or without user interaction."
+        buf.extend(
+            (
+                "  Make sure to directly send your"
+                f" {request.method}-request to this URL since we can't make"
+                " browsers or HTTP clients redirect with form data reliably"
+                " or without user interaction.",
+                "\n\nNote: this exception is only raised in debug mode",
+            )
         )
-        buf.append("\n\nNote: this exception is only raised in debug mode")
+
         AssertionError.__init__(self, "".join(buf).encode("utf-8"))
 
 
@@ -129,9 +132,7 @@ def explain_template_loading_attempts(app: Flask, template, attempts) -> None:
 
         info.append(f"{idx + 1:5}: trying loader of {src_info}")
 
-        for line in _dump_loader_info(loader):
-            info.append(f"       {line}")
-
+        info.extend(f"       {line}" for line in _dump_loader_info(loader))
         if triple is None:
             detail = "no match"
         else:
@@ -148,12 +149,14 @@ def explain_template_loading_attempts(app: Flask, template, attempts) -> None:
         seems_fishy = True
 
     if blueprint is not None and seems_fishy:
-        info.append(
-            "  The template was looked up from an endpoint that belongs"
-            f" to the blueprint {blueprint!r}."
+        info.extend(
+            (
+                "  The template was looked up from an endpoint that belongs"
+                f" to the blueprint {blueprint!r}.",
+                "  Maybe you did not place a template in the right folder?",
+                "  See https://flask.palletsprojects.com/blueprints/#templates",
+            )
         )
-        info.append("  Maybe you did not place a template in the right folder?")
-        info.append("  See https://flask.palletsprojects.com/blueprints/#templates")
 
     app.logger.info("\n".join(info))
 

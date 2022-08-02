@@ -1642,7 +1642,7 @@ def test_inject_blueprint_url_defaults(app):
 
     app.register_blueprint(bp)
 
-    values = dict()
+    values = {}
     app.inject_url_defaults("foo.view", values)
     expected = dict(page="login")
     assert values == expected
@@ -1809,7 +1809,7 @@ def test_preserve_remembers_exception(app, client):
     # After this failure we did not yet call the teardown handler
     with pytest.raises(ZeroDivisionError):
         client.get("/fail")
-    assert errors == []
+    assert not errors
 
     # But this request triggers it, and it's an error
     client.get("/success")

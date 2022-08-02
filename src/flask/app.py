@@ -527,7 +527,7 @@ class Flask(Scaffold):
         return self.debug and self._got_first_request
 
     @locked_cached_property
-    def name(self) -> str:  # type: ignore
+    def name(self) -> str:    # type: ignore
         """The name of the application.  This is usually the import name
         with the difference that it's guessed from the run file if the
         import name is main.  This name is used as a display name when
@@ -538,9 +538,7 @@ class Flask(Scaffold):
         """
         if self.import_name == "__main__":
             fn = getattr(sys.modules["__main__"], "__file__", None)
-            if fn is None:
-                return "__main__"
-            return os.path.splitext(os.path.basename(fn))[0]
+            return "__main__" if fn is None else os.path.splitext(os.path.basename(fn))[0]
         return self.import_name
 
     @property
@@ -551,9 +549,7 @@ class Flask(Scaffold):
         .. versionadded:: 0.7
         """
         rv = self.config["PROPAGATE_EXCEPTIONS"]
-        if rv is not None:
-            return rv
-        return self.testing or self.debug
+        return rv if rv is not None else self.testing or self.debug
 
     @property
     def preserve_context_on_exception(self) -> bool:
@@ -564,9 +560,7 @@ class Flask(Scaffold):
         .. versionadded:: 0.7
         """
         rv = self.config["PRESERVE_CONTEXT_ON_EXCEPTION"]
-        if rv is not None:
-            return rv
-        return self.debug
+        return rv if rv is not None else self.debug
 
     @locked_cached_property
     def logger(self) -> logging.Logger:
@@ -623,9 +617,7 @@ class Flask(Scaffold):
 
         .. versionadded:: 0.8
         """
-        root_path = self.root_path
-        if instance_relative:
-            root_path = self.instance_path
+        root_path = self.instance_path if instance_relative else self.root_path
         defaults = dict(self.default_config)
         defaults["ENV"] = get_env()
         defaults["DEBUG"] = get_debug_flag()
@@ -754,7 +746,7 @@ class Flask(Scaffold):
                     funcs = chain(funcs, self.template_context_processors[bp])
         orig_ctx = context.copy()
         for func in funcs:
-            context.update(func())
+            context |= func()
         # make sure the original values win.  This makes it possible to
         # easier add new variables in context processors without breaking
         # existing views.
@@ -769,7 +761,7 @@ class Flask(Scaffold):
         """
         rv = {"app": self, "g": g}
         for processor in self.shell_context_processors:
-            rv.update(processor())
+            rv |= processor()
         return rv
 
     #: What environment the app is running in. Flask and extensions may
@@ -899,11 +891,7 @@ class Flask(Scaffold):
             sn_host, _, sn_port = server_name.partition(":")
 
         if not host:
-            if sn_host:
-                host = sn_host
-            else:
-                host = "127.0.0.1"
-
+            host = sn_host or "127.0.0.1"
         if port or port == 0:
             port = int(port)
         elif sn_port:
@@ -1321,9 +1309,7 @@ class Flask(Scaffold):
             return e
 
         handler = self._find_error_handler(e)
-        if handler is None:
-            return e
-        return self.ensure_sync(handler)(e)
+        return e if handler is None else self.ensure_sync(handler)(e)
 
     def trap_http_exception(self, e: Exception) -> bool:
         """Checks if an HTTP exception should be trapped or not.  By default
@@ -1355,10 +1341,7 @@ class Flask(Scaffold):
         ):
             return True
 
-        if trap_bad_request:
-            return isinstance(e, BadRequest)
-
-        return False
+        return isinstance(e, BadRequest) if trap_bad_request else False
 
     def handle_user_exception(
         self, e: Exception
@@ -1595,10 +1578,7 @@ class Flask(Scaffold):
 
         .. versionadded:: 2.0
         """
-        if iscoroutinefunction(func):
-            return self.async_to_sync(func)
-
-        return func
+        return self.async_to_sync(func) if iscoroutinefunction(func) else func
 
     def async_to_sync(
         self, func: t.Callable[..., t.Coroutine]
@@ -1769,10 +1749,11 @@ class Flask(Scaffold):
             # If subdomain matching is disabled (the default), use the
             # default subdomain in all cases. This should be the default
             # in Werkzeug but it currently does not have that feature.
-            if not self.subdomain_matching:
-                subdomain = self.url_map.default_subdomain or None
-            else:
-                subdomain = None
+            subdomain = (
+                None
+                if self.subdomain_matching
+                else self.url_map.default_subdomain or None
+            )
 
             return self.url_map.bind_to_environ(
                 request.environ,

@@ -215,6 +215,7 @@ def test_tojson_filter(app, req_ctx):
 
 
 def test_json_customization(app, client):
+
     class X:  # noqa: B903, for Python2 compatibility
         def __init__(self, val):
             self.val = val
@@ -225,15 +226,16 @@ def test_json_customization(app, client):
                 return f"<{o.val}>"
             return flask.json.JSONEncoder.default(self, o)
 
+
+
     class MyDecoder(flask.json.JSONDecoder):
         def __init__(self, *args, **kwargs):
             kwargs.setdefault("object_hook", self.object_hook)
             flask.json.JSONDecoder.__init__(self, *args, **kwargs)
 
         def object_hook(self, obj):
-            if len(obj) == 1 and "_foo" in obj:
-                return X(obj["_foo"])
-            return obj
+            return X(obj["_foo"]) if len(obj) == 1 and "_foo" in obj else obj
+
 
     app.json_encoder = MyEncoder
     app.json_decoder = MyDecoder
@@ -251,6 +253,7 @@ def test_json_customization(app, client):
 
 
 def test_blueprint_json_customization(app, client):
+
     class X:
         __slots__ = ("val",)
 
@@ -264,16 +267,16 @@ def test_blueprint_json_customization(app, client):
 
             return flask.json.JSONEncoder.default(self, o)
 
+
+
     class MyDecoder(flask.json.JSONDecoder):
         def __init__(self, *args, **kwargs):
             kwargs.setdefault("object_hook", self.object_hook)
             flask.json.JSONDecoder.__init__(self, *args, **kwargs)
 
         def object_hook(self, obj):
-            if len(obj) == 1 and "_foo" in obj:
-                return X(obj["_foo"])
+            return X(obj["_foo"]) if len(obj) == 1 and "_foo" in obj else obj
 
-            return obj
 
     bp = flask.Blueprint("bp", __name__)
     bp.json_encoder = MyEncoder

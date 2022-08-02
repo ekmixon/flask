@@ -51,9 +51,7 @@ class JSONEncoder(_json.JSONEncoder):
             return str(o)
         if dataclasses and dataclasses.is_dataclass(o):
             return dataclasses.asdict(o)
-        if hasattr(o, "__html__"):
-            return str(o.__html__())
-        return super().default(o)
+        return str(o.__html__()) if hasattr(o, "__html__") else super().default(o)
 
 
 class JSONDecoder(_json.JSONDecoder):

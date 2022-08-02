@@ -19,7 +19,7 @@ def test_teardown_on_pop(app):
 
     ctx = app.test_request_context()
     ctx.push()
-    assert buffer == []
+    assert not buffer
     ctx.pop()
     assert buffer == [None]
 
@@ -37,7 +37,7 @@ def test_teardown_with_previous_exception(app):
         pass
 
     with app.test_request_context():
-        assert buffer == []
+        assert not buffer
     assert buffer == [None]
 
 
@@ -49,7 +49,7 @@ def test_teardown_with_handled_exception(app):
         buffer.append(exception)
 
     with app.test_request_context():
-        assert buffer == []
+        assert not buffer
         try:
             raise Exception("dummy")
         except Exception:

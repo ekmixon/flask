@@ -42,10 +42,11 @@ def get_debug_flag() -> bool:
     """
     val = os.environ.get("FLASK_DEBUG")
 
-    if not val:
-        return get_env() == "development"
-
-    return val.lower() not in ("0", "false", "no")
+    return (
+        val.lower() not in ("0", "false", "no")
+        if val
+        else get_env() == "development"
+    )
 
 
 def get_load_dotenv(default: bool = True) -> bool:
@@ -57,10 +58,7 @@ def get_load_dotenv(default: bool = True) -> bool:
     """
     val = os.environ.get("FLASK_SKIP_DOTENV")
 
-    if not val:
-        return default
-
-    return val.lower() in ("0", "false", "no")
+    return val.lower() in ("0", "false", "no") if val else default
 
 
 def stream_with_context(
@@ -283,7 +281,7 @@ def url_for(endpoint: str, **values: t.Any) -> str:
         url_adapter = reqctx.url_adapter
         blueprint_name = request.blueprint
 
-        if endpoint[:1] == ".":
+        if endpoint.startswith("."):
             if blueprint_name is not None:
                 endpoint = f"{blueprint_name}{endpoint}"
             else:
@@ -291,8 +289,6 @@ def url_for(endpoint: str, **values: t.Any) -> str:
 
         external = values.pop("_external", False)
 
-    # Otherwise go with the url adapter from the appctx and make
-    # the URLs external by default.
     else:
         url_adapter = appctx.url_adapter
 
@@ -434,9 +430,7 @@ def get_flashed_messages(
         )
     if category_filter:
         flashes = list(filter(lambda f: f[0] in category_filter, flashes))
-    if not with_categories:
-        return [x[1] for x in flashes]
-    return flashes
+    return flashes if with_categories else [x[1] for x in flashes]
 
 
 def _prepare_send_file_kwargs(

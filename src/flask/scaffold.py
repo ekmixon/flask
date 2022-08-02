@@ -306,10 +306,7 @@ class Scaffold:
         """
         value = current_app.send_file_max_age_default
 
-        if value is None:
-            return None
-
-        return int(value.total_seconds())
+        return None if value is None else int(value.total_seconds())
 
     def send_static_file(self, filename: str) -> "Response":
         """The view function used to serve files from

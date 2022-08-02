@@ -262,16 +262,16 @@ def test_test_client_calls_teardown_handlers(app, client):
         called.append(error)
 
     with client:
-        assert called == []
+        assert not called
         client.get("/")
-        assert called == []
+        assert not called
     assert called == [None]
 
     del called[:]
     with client:
-        assert called == []
+        assert not called
         client.get("/")
-        assert called == []
+        assert not called
         client.get("/")
         assert called == [None]
     assert called == [None, None]
